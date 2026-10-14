@@ -1,4 +1,4 @@
-# Government Scheme RAG (Tamil & English)
+# Government Agricultural Scheme RAGBot
 
 A production-grade, local-first Retrieval-Augmented Generation (RAG) system specifically designed for Tamil Nadu and Indian Government Schemes. Built with Streamlit, FAISS, BM25, and Google Gemini, this system supports multilingual document parsing (digital/scanned PDFs, TXT, Markdown, and Web URLs), hybrid retrieval with Reciprocal Rank Fusion (RRF), and SQLite caching.
 
@@ -6,19 +6,19 @@ A production-grade, local-first Retrieval-Augmented Generation (RAG) system spec
 
 Watch the walkthrough video below to see the Streamlit user interface, source inspection, and hybrid search in action:
 
-https://github.com/user-attachments/assets/your-video-attachment-id-here
+https://github.com/Raajkuma/Advance_RAG/blob/main/screenshots/demo.mp4
 
 ## 🏗️ System Architecture & Visual Walkthrough
 
 To make the architecture and processing flow easy to understand, the system is broken down into two core pipelines: **Ingestion** and **Chunking**.
 
 ### 1. Ingestion Pipeline
-![Ingestion Pipeline](./assets/ingestionpipeline.png)
+![Ingestion Pipeline](./screenshots/IngestionPipeline.png)
 
 Documents pass through a rigorous multi-stage parser capable of handling complex government notification formats, structured tables, and scanned text via OCR fallbacks before being indexed.
 
 ### 2. Intelligent Chunking Strategy
-![Chunking Architecture](./assets/chunking.png)
+![Chunking Architecture](./screenshots/chunking.png)
 
 To preserve semantic context across long government scheme regulations, documents undergo **semantic-based splitting** first to identify logical section boundaries, followed by structured chunking over the extracted text with overlapping windows optimized for dense embedding retrieval.
 
