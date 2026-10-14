@@ -1,78 +1,103 @@
-# Government Agriculture Schemes RAG System
+# Government Scheme RAG (Tamil & English)
 
-A production-grade Retrieval-Augmented Generation (RAG) system meticulously optimized for Tamil and English government schemes, welfare policies, and administrative documents. This application integrates high-performance parallel hybrid retrieval, advanced semantic-hybrid chunking, persistent SQLite caching, automated web search fallback, and comprehensive observability.
+A production-grade, local-first Retrieval-Augmented Generation (RAG) system specifically designed for Tamil Nadu and Indian Government Schemes. Built with Streamlit, FAISS, BM25, and Google Gemini, this system supports multilingual document parsing (digital/scanned PDFs, TXT, Markdown, and Web URLs), hybrid retrieval with Reciprocal Rank Fusion (RRF), and SQLite caching.
 
----
+## 📽️ System Demo Video
 
-## 🚀 Key Features & Architecture Flow
+Watch the walkthrough video below to see the Streamlit user interface, source inspection, and hybrid search in action:
 
-### 1. Multi-Format Ingestion & URL Scraping
-* **Document Parser (`ingestion/document_parser.py`):** Supports digital PDFs, scanned PDFs (with OCR fallback), plain text, and Markdown files. Extracts pages cleanly into structured formats.
-* **Web Scraping (`ingestion/web_loader.py`):** Fetches government portals and scheme web pages using `requests` and `BeautifulSoup`, stripping away boilerplate navigation/footers and assigning the explicit URL as the document source.
+https://github.com/user-attachments/assets/your-video-attachment-id-here
 
-### 2. Advanced Hybrid Chunking Strategy (`ingestion/chunker.py`)
-* **Semantic Boundary Detection:** Sentences are embedded using a lightweight sentence transformer model (`all-MiniLM-L6-v2`) to compute semantic distance shifts across consecutive sentences.
-* **Size & Overlap Constraints:** 
-  * Sentences are grouped into semantic blocks based on similarity thresholds.
-  * If a semantic section exceeds the configured `chunk_size`, a sliding-window algorithm with `chunk_overlap` is enforced to ensure uniform chunk sizes while preserving semantic context.
-* **Pydantic Schemas (`schemas.py`):** Fully typed contracts (`Document`, `Chunk`) ensure type safety and prevent runtime attribute errors.
+## 🏗️ System Architecture & Visual Walkthrough
 
-### 3. Vector Storage & Embeddings (`indexing/vector_index.py`)
-* **FAISS Vector Store:** Efficiently indexes dense embeddings for fast semantic similarity search.
-* **Batch Processing:** Handles embedding batches asynchronously with progress updates tracking in the Streamlit UI.
+To make the architecture and processing flow easy to understand, the system is broken down into two core pipelines: **Ingestion** and **Chunking**.
 
-### 4. User Query & Enhancement / Smart Routing
-* **Query Processing & Cache Lookup:** Checks the persistent SQLite query cache (`retrieval/cache.py`) first to return sub-millisecond responses for repeated queries.
-* **Web Search Trigger (`web_search/search_provider.py`):** Automatically evaluates local retrieval results. If local confidence is insufficient, it dynamically triggers live web search via the **Tavily API**.
+### 1. Ingestion Pipeline
+![Ingestion Pipeline](./assets/ingestionpipeline.png)
 
-### 5. Parallel Hybrid Retrieval & Reranking (`retrieval/hybrid_search.py`)
-* **Concurrent Execution:** Utilizes `ThreadPoolExecutor` to run sparse keyword search (BM25) and dense vector search (FAISS) in parallel, minimizing end-to-end latency.
-* **Reciprocal Rank Fusion (RRF):** Intelligently merges and reranks results from both retrieval paths to surface the highest-quality context.
+Documents pass through a rigorous multi-stage parser capable of handling complex government notification formats, structured tables, and scanned text via OCR fallbacks before being indexed.
 
-### 6. LLM Response Generation (`generation/answer_generator.py`)
-* **Contextual Synthesis:** Passes retrieved local chunks and web search results to **Google Gemini** to generate grounded, accurate answers in Tamil or English.
-* **Visual Badging:** Distinct UI indicators and source expander badges clearly distinguish **Local Knowledge** sources from **Live Web Search (Tavily)** results.
+### 2. Intelligent Chunking Strategy
+![Chunking Architecture](./assets/chunking.png)
 
-### 7. Observability & Logging (`config.py`)
-* **LangSmith Integration:** Tracks LLM calls, latency, token usage, and retrieval traces out-of-the-box via environment configurations (`LANGCHAIN_TRACING_V2`).
+To preserve semantic context across long government scheme regulations, documents undergo **semantic-based splitting** first to identify logical section boundaries, followed by structured chunking over the extracted text with overlapping windows optimized for dense embedding retrieval.
 
-### 8. Maintenance & System Reset
-* **State Management:** Built-in UI controls in the sidebar to monitor indexed chunks, view uploaded files and scraped URLs, and programmatically wipe vector indices, original uploads, and response cache.
+## 🔍 Retrieval Logic & Hybrid Search
 
----
+* **Hybrid Search:** Combines **FAISS** (dense semantic vector search with persistent memory) and **BM25** (sparse keyword search).
+* **Reciprocal Rank Fusion (RRF):** Merges results using an RRF constant ($k=60$) to ensure high recall for both technical scheme names and exact keyword parameters.
+* **SQLite Caching:** Uses **SQLite** for cache memory to store generated responses and retrieved chunks, providing instantaneous responses for repeat user queries.
 
-## 🛠️ Tech Stack
+## ✨ Key Features
 
-* **UI Framework:** Streamlit
-* **LLM & Generation:** Google Gemini API
-* **Retrieval & Reranking:** FAISS + BM25 + Reciprocal Rank Fusion (RRF) via `ThreadPoolExecutor`
-* **Embeddings & Chunking:** SentenceTransformers (`all-MiniLM-L6-v2`)
-* **Web Scraping:** BeautifulSoup & Requests
-* **Web Search:** Tavily API
-* **Caching:** SQLite3 (`query_cache.db`)
-* **Observability:** LangSmith
+* **Multilingual Support:** Seamlessly handles queries and documents in both English and Tamil (Tanglish/Tamil script).
+* **Comprehensive Source Inspection:** Each generated response expands to show exact metadata including `Filename`, `Page Number`, `RRF Relevance Score`, and `Chunk Text`.
+* **Flexible Ingestion:** Upload multi-page PDFs, text documents, or scrape live government portal URLs directly from the UI sidebar.
+* **Persistent Memory & Cache:** Utilizes FAISS for robust vector persistence and SQLite for lightning-fast response caching.
+* **System Diagnostics:** Built-in event logging container tracking backend initialization, embedding status, and retrieval steps.
 
----
-
-## 📂 Project Directory Structure
+## 📁 Directory Structure
 
 ```text
 government-scheme-rag/
-├── app.py                     # Main Streamlit UI entry point
-├── config.py                  # Global settings and environment variables
-├── schemas.py                 # Pydantic models (Document, Chunk)
+├── app.py                     # Main Streamlit web application interface
+├── config.py                  # Global settings, environment paths, and model configurations
+├── data/                      # Local data storage for raw originals and vector indices
 ├── ingestion/
-│   ├── document_parser.py     # Multi-format parser (PDF, TXT, MD)
-│   ├── web_loader.py          # Webpage scraping and URL loader
-│   └── chunker.py             # Semantic + size/overlap chunking strategy
+│   ├── document_parser.py     # PDF, TXT, Markdown, and URL text extractors
+│   └── chunker.py             # Semantic-based splitting & chunking logic
 ├── indexing/
-│   └── vector_index.py        # FAISS vector index manager
+│   └── vector_index.py        # FAISS vector store management and persistent memory
 ├── retrieval/
-│   ├── hybrid_search.py       # Parallel BM25 + FAISS search & RRF merger
-│   └── cache.py               # Persistent SQLite query response cache
-├── web_search/
-│   └── search_provider.py     # Tavily search integration & query trigger
+│   ├── hybrid_search.py       # BM25 + FAISS fusion and RRF ranking
+│   └── cache.py               # SQLite-based query and response caching layer
 ├── generation/
-│   └── answer_generator.py    # LLM response generation with citations
-└── data/
-    └── originals/             # Stored raw uploaded source files#
+│   └── answer_generator.py    # Gemini-powered response synthesizer
+└── assets/
+    ├── chunking.png           # Chunking architecture diagram
+    └── ingestionpipeline.png  # Ingestion workflow diagram
+```
+
+## ⚙️ Setup & Installation
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/government-scheme-rag.git
+cd government-scheme-rag
+```
+
+### 2. Create a Virtual Environment
+```bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure Environment Variables
+Create a `.env` file in the root directory and add your Google Gemini API key:
+```env
+GEMINI_API_KEY=your_google_gemini_api_key_here
+```
+
+## 🚀 Usage
+
+Launch the Streamlit application locally:
+```bash
+streamlit run app.py
+```
+
+1. Open your browser to `http://localhost:8501`.
+2. Use the **sidebar** to upload government scheme PDFs or ingest portal URLs.
+3. Once indexed, type your questions into the chat input (e.g., *“What are the eligibility criteria for the Pudhumai Penn scheme?”*).
+4. Expand the **Retrieved sources** section under any answer to audit chunk text, page numbers, and RRF relevance scores.
+
+## 🛠️ System Reset & Maintenance
+
+You can completely wipe local persistent indexes, cached SQLite responses, and uploaded source documents directly from the Streamlit sidebar using the **System Reset** button if you need to re-initialize your knowledge base.
