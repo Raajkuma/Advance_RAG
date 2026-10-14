@@ -11,13 +11,15 @@ https://github.com/Raajkuma/Advance_RAG/blob/main/screenshots/demo.mp4
 ## 🏗️ System Architecture & Visual Walkthrough
 
 To make the architecture and processing flow easy to understand, the system is broken down into two core pipelines: **Ingestion** and **Chunking**.
+### 1. Home Page
+![Home Page](./screenshots/HomePage.png)
 
-### 1. Ingestion Pipeline
+### 2. Ingestion Pipeline
 ![Ingestion Pipeline](./screenshots/IngestionPipeline.png)
 
 Documents pass through a rigorous multi-stage parser capable of handling complex government notification formats, structured tables, and scanned text via OCR fallbacks before being indexed.
 
-### 2. Intelligent Chunking Strategy
+### 3. Intelligent Chunking Strategy
 ![Chunking Architecture](./screenshots/chunking.png)
 
 To preserve semantic context across long government scheme regulations, documents undergo **semantic-based splitting** first to identify logical section boundaries, followed by structured chunking over the extracted text with overlapping windows optimized for dense embedding retrieval.
